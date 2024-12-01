@@ -1,0 +1,254 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+// 유저
+model User {
+  id               Int       @id @default(autoincrement())
+  name             String    @db.VarChar(20)
+  gender           String?   @db.VarChar(20)
+  birth            DateTime? @db.Date
+  location         String    @db.VarChar(20)
+  addressDetail    String    @map("address_detail")    @db.VarChar(20)
+  email            String    @unique(map: "email")     @db.VarChar(255)
+  phoneNumber      String?   @map("phone_number")      @db.VarChar(20)
+  point            Int?      @db.Int
+  profileImgUrl    String?   @map("profile_img_url")   @db.VarChar(255)
+  locationShare    Boolean?  @map("location_share")    @default(false)
+  marketingReceive Boolean?  @map("marketing_receive") @default(false)
+  inactiveDate     DateTime? @map("inactive_date")     @db.DateTime(6)
+  createdAt        DateTime? @map("created_at")        @default(now()) @db.DateTime(6)
+  updatedAt        DateTime? @map("updated_at")        @updatedAt      @db.DateTime(6)
+
+  favoriteFood    FavoriteFood[]
+  review          Review[]
+  personalMission PersonalMission[]
+  inquiry         Inquiry[]
+  alarm           Alarm[]
+  alarmReceive    AlarmReceive[]
+
+  @@map("user")
+}
+
+
+// 음식 카테고리
+model FoodCategory {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(20)
+
+  favoriteFood FavoriteFood[]
+
+  @@map("food_category")
+}
+
+
+// 선호 음식
+model FavoriteFood {
+  id           Int          @id @default(autoincrement())
+  user         User         @relation(fields: [userId], references: [id])
+  userId       Int          @map("user_id")
+  foodCategory FoodCategory @relation(fields: [foodId], references: [id])
+  foodId       Int          @map("food_id")
+  createdAt    DateTime     @map("created_at") @default(now()) @db.DateTime(6)
+  updatedAt    DateTime     @map("updated_at") @updatedAt      @db.DateTime(6)
+
+  @@index([foodId], map: "food_id")
+  @@index([userId], map: "user_id")
+  @@map("favorite_food")
+}
+
+
+// 매장
+model Restaurant {
+  id            Int     @id @default(autoincrement())
+	name          String  @db.VarChar(20)
+	location      String  @db.VarChar(20)
+	addressDetail String  @map("address_detail") @db.VarChar(20)
+	openStatus    Boolean @map("open_status")    @default(true)
+	foodCategory  String  @map("food_category")  @db.VarChar(20)
+
+  restaurantImage RestaurantImage[]
+  review          Review[]
+  mission         Mission[]
+
+  @@map("restaurant")
+}
+
+
+// 매장 이미지
+model RestaurantImage {
+  id           Int         @id @default(autoincrement())
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id])
+  restaurantId Int         @map("restaurant_id") @db.Int
+	imgUrl       String      @map("img_url")       @db.VarChar(255)
+
+  @@map("restaurant_image")
+}
+
+
+// 리뷰
+model Review {
+  id           Int        @id @default(autoincrement())
+  user         User       @relation(fields: [userId], references: [id])
+  userId       Int        @map("user_id")       @db.Int
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId Int        @map("restaurant_id") @db.Int
+  score        Int        @db.Int
+  body         String     @db.VarChar(255)
+  createdAt    DateTime   @map("created_at")    @default(now()) @db.DateTime(6)
+  updatedAt    DateTime   @map("updated_at")    @updatedAt      @db.DateTime(6)
+
+  reviewImage ReviewImage[]
+
+  @@map("review")
+}
+
+
+// 리뷰 이미지
+model ReviewImage {
+  id       Int    @id @default(autoincrement())
+  review   Review @relation(fields: [reviewId], references: [id])
+  reviewId Int    @map("review_id") @db.Int
+  imgUrl   String @map("img_url")   @db.VarChar(255)
+
+  @@map("review_image")
+}
+
+
+// 미션
+model Mission {
+  id                  Int        @id @default(autoincrement())
+  restaurant          Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId        Int        @map("restaurant_id") @db.Int
+	price               Int        @db.Int
+	point               Int        @db.Int
+	certificationNumber String     @map("certification_number") @db.VarChar(20)
+
+  personalMission PersonalMission[]
+
+  @@map("mission")
+}
+
+
+// 개인 미션
+model PersonalMission {
+  id             Int     @id @default(autoincrement())
+  user           User    @relation(fields: [userId], references: [id])
+  userId         Int     @map("user_id")         @db.Int
+  mission        Mission @relation(fields: [missionId], references: [id])
+  missionId      Int     @map("mission_id")      @db.Int
+  progressStatus String  @map("progress_status") @db.VarChar(20)
+  successStatus  String  @map("success_status")  @db.VarChar(20)
+	createdAt    DateTime  @map("created_at")      @default(now()) @db.DateTime(6)
+  updatedAt    DateTime  @map("updated_at")      @updatedAt      @db.DateTime(6)
+
+  @@map("personal_mission")
+}
+
+
+// 문의 유형
+model InquiryType {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(20)
+
+  inquiry Inquiry[]
+
+  @@map("inquiry_type")
+}
+
+
+// 문의글
+model Inquiry {
+  id            Int         @id @default(autoincrement())
+  user          User        @relation(fields: [userId], references: [id])
+  userId        Int         @map("user_id")         @db.Int
+  inquiryType   InquiryType @relation(fields: [inquiryTypeId], references: [id])
+  inquiryTypeId Int         @map("inquiry_type_id") @db.Int
+  title         String      @db.VarChar(255)
+  body          String      @db.VarChar(255)
+  answerStatus  Boolean?    @map("answer_status")   @default(false)
+	createdAt     DateTime    @map("created_at")      @default(now()) @db.DateTime(6)
+  updatedAt     DateTime    @map("updated_at")      @updatedAt      @db.DateTime(6)
+  
+  inquiryImage  InquiryImage[]
+  inquiryAnswer InquiryAnswer[]
+  
+  @@map("inquiry")
+}
+
+
+// 문의글 이미지
+model InquiryImage {
+  id        Int     @id @default(autoincrement())
+  inquiry   Inquiry @relation(fields: [inquiryId], references: [id])
+  inquiryId Int     @map("inquiry_id") @db.Int
+  imgUrl    String  @map("img_url")    @db.VarChar(255)
+
+  @@map("inquiry_image")
+}
+
+
+// 문의 답변
+model InquiryAnswer {
+  id           Int      @id @default(autoincrement())
+  inquiry      Inquiry  @relation(fields: [inquiryId], references: [id])
+  inquiryId    Int      @map("inquiry_id")    @db.Int
+  title        String   @db.VarChar(255)
+  body         String   @db.VarChar(255)
+  answerStatus Boolean? @map("answer_status") @default(false)
+  updatedAt    DateTime @map("updated_at")    @updatedAt      @db.DateTime(6)
+	createdAt    DateTime @map("created_at")    @default(now()) @db.DateTime(6)
+
+  @@map("inquiry_answer")
+}
+
+
+// 알림
+model Alarm {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int      @map("user_id")    @db.Int
+  type      String   @db.VarChar(20)
+  title     String   @db.VarChar(255)
+  body      String   @db.VarChar(255)
+  receiveAt DateTime @map("receive_at") @db.DateTime(6)
+  
+  @@map("alarm")
+}
+
+
+// 알림 수신
+model AlarmReceive {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int      @map("user_id")        @db.Int
+  type          String   @db.VarChar(20)
+  receiveStatus Boolean? @map("receive_status") @default(false)
+
+  @@map("alarm_receive")
+}
+
+
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String   @db.VarChar(512)
+  expiresAt DateTime @map("expires_at")
+
+  @@map("session")
+}
+
+
+// npm exec prisma migrate dev
