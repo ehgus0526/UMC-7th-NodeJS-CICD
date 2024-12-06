@@ -60,7 +60,8 @@ export const naverStrategy = new NaverStrategy(
     {
         clientID: process.env.PASSPORT_NAVER_CLIENT_ID,
         clientSecret: process.env.PASSPORT_NAVER_CLIENT_SECRET,
-        callbackURL: "http://localhost:3000/oauth2/callback/naver",
+        callbackURL: "http://13.125.187.63/oauth2/callback/naver",
+        // callbackURL: "http://localhost:3000/oauth2/callback/naver",
     },
     (accessToken, refreshToken, profile, cb) => {
         return naverVerify(profile)
