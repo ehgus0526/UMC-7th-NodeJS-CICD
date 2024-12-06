@@ -46,9 +46,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ssh -o ServerAliveInterval=60 playground-umc-7th 'npm install --prefix /opt/app/'
-          ssh -o ServerAliveInterval=60 playground-umc-7th 'cd /opt/app; npm exec prisma generate'
-        
+          ssh playground-umc-7th 'npm install --prefix /opt/app/'
+          ssh playground-umc-7th 'cd /opt/app; npm exec prisma generate'
 
       - name: Apply prisma migrations
         if: steps.paths-filter.outputs.prisma == 'true'
